@@ -83,6 +83,8 @@ def dump_tensors(
 
 # ========== 2. Save to BIN ==========
 def save_tensor_to_bin(tensor: torch.Tensor, save_path: str):
+    if tensor.dtype == torch.bfloat16:
+        tensor = tensor.view(torch.float16)
     bin_data = tensor.cpu().contiguous().numpy().tobytes()
     with open(save_path, 'wb') as f:
         f.write(bin_data)
