@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tensor_dump"
+version = "0.1.0"
+authors = [{ name = "tangxj818" }]
+description = "Tensor dump and compare tool"
+requires-python = ">=3.8"
+dependencies = [
+    "torch>=1.13",
+    "numpy>=1.22",
+]

@@ -6,9 +6,8 @@ from .dump import (
     reset_dump_counter
 )
 from .load import (
-    load_tensor_from_bin,
     load_tensor_from_txt,
-    load_txt_info
+    load_tensor_from_bin,
 )
 from .compare import compare_tensor_dirs
 

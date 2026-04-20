@@ -3,25 +3,27 @@ import numpy as np
 import torch
 from typing import Optional
 
-# ========== 1. 从 BIN 文件加载张量（补齐功能）==========
-def load_tensor_from_bin(
-    bin_path: str,
-    shape,
-    dtype=torch.float32
-) -> torch.Tensor:
-    """
-    从 bin 加载原始张量（必须知道 shape + dtype）
-    对应 save_tensor_to_bin
-    """
-    with open(bin_path, 'rb') as f:
-        buffer = f.read()
+TORCH_TO_NUMPY_DTYPE = {
+    torch.float32: np.float32,
+    torch.float64: np.float64,
+    torch.float16: np.float16,
+    torch.int64: np.int64,
+    torch.int32: np.int32,
+    torch.int16: np.int16,
+    torch.int8: np.int8,
+    torch.uint8: np.uint8,
+    torch.bool: np.bool_,
+}
 
-    # numpy 解析
-    np_dtype = dtype.numpy() if isinstance(dtype, torch.dtype) else dtype
-    arr = np.frombuffer(buffer, dtype=np_dtype)
-    tensor = torch.from_numpy(arr).reshape(shape)
-    print(f"[LOAD BIN] Loaded {bin_path}, shape={tensor.shape}, dtype={tensor.dtype}")
-    return tensor
+# ========== 1. 从 BIN 文件加载张量（补齐功能）==========
+def load_tensor_from_bin(bin_path: str, shape: tuple, dtype: torch.dtype = torch.float32) -> torch.Tensor:
+    """从 bin 文件加载 tensor"""
+    np_dtype = TORCH_TO_NUMPY_DTYPE.get(dtype, np.float32)
+
+    with open(bin_path, "rb") as f:
+        data = np.frombuffer(f.read(), dtype=np_dtype)
+    
+    return torch.tensor(data, dtype=dtype).view(shape)
 
 # ========== 2. 从 TXT 文件加载张量（补齐功能）==========
 def load_tensor_from_txt(txt_path: str) -> Optional[torch.Tensor]:
