@@ -1,7 +1,7 @@
 from .dump import (
     dump_tensor,
     dump_tensors,
-    save_tensor_to_bin,
+    dump_tensor_to_bin,
     dump_config,
     reset_dump_counter
 )

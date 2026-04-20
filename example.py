@@ -2,7 +2,7 @@ import torch
 import os
 from tensor_dump import (
     dump_tensor,
-    save_tensor_to_bin,
+    dump_tensor_to_bin,
     dump_config,
     load_tensor_from_bin,
     load_tensor_from_txt,
@@ -19,8 +19,8 @@ dump_tensor(x, "test_x", "./dump_a")
 dump_tensor(x, "test_x", "./dump_b")
 
 # 3. Dump bin
-save_tensor_to_bin(x, "./dump_a/data.bin")
-save_tensor_to_bin(x, "./dump_b/data.bin")
+dump_tensor_to_bin(x, "./dump_a/data.bin")
+dump_tensor_to_bin(x, "./dump_b/data.bin")
 
 # 4. Dump config
 dump_config({

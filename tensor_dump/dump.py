@@ -82,7 +82,7 @@ def dump_tensors(
         dump_tensor(tensor, full_name, output_dir, **kwargs)
 
 # ========== 2. Save to BIN ==========
-def save_tensor_to_bin(tensor: torch.Tensor, save_path: str):
+def dump_tensor_to_bin(tensor: torch.Tensor, save_path: str):
     if tensor.dtype == torch.bfloat16:
         tensor = tensor.view(torch.float16)
     bin_data = tensor.cpu().contiguous().numpy().tobytes()
