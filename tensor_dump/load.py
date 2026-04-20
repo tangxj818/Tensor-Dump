@@ -15,9 +15,8 @@ TORCH_TO_NUMPY_DTYPE = {
     torch.bool: np.bool_,
 }
 
-# ========== 1. 从 BIN 文件加载张量（补齐功能）==========
 def load_tensor_from_bin(bin_path: str, shape: tuple, dtype: torch.dtype = torch.float32) -> torch.Tensor:
-    """从 bin 文件加载 tensor"""
+    """Load tensor from BIN file"""
     np_dtype = TORCH_TO_NUMPY_DTYPE.get(dtype, np.float32)
 
     with open(bin_path, "rb") as f:
@@ -25,16 +24,13 @@ def load_tensor_from_bin(bin_path: str, shape: tuple, dtype: torch.dtype = torch
     
     return torch.tensor(data, dtype=dtype).view(shape)
 
-# ========== 2. 从 TXT 文件加载张量（补齐功能）==========
 def load_tensor_from_txt(txt_path: str) -> Optional[torch.Tensor]:
     """
-    从 dump 的 txt 中恢复数据（只恢复保存的前 N 个元素）
-    对应 dump_tensor
+    Load tensor from TXT file
     """
     with open(txt_path, 'r') as f:
         content = f.read()
 
-    # 正则提取数据
     match = re.search(r"Data \(first \d+ elements\):\n-+\n(.*?)(?:\n\n|\Z)", content, re.DOTALL)
     if not match:
         print(f"[LOAD TXT] No data found in {txt_path}")

@@ -5,7 +5,6 @@ from datetime import datetime
 from typing import Optional, Union, Dict
 import torch
 
-# ========== 全局计数器（txt dump 用）==========
 _dump_counter = 0
 
 def _get_next_counter() -> int:
@@ -17,7 +16,7 @@ def reset_dump_counter():
     global _dump_counter
     _dump_counter = 0
 
-# ========== 1. Dump to TXT（你给的代码）==========
+# ========== 1. Dump to TXT ==========
 def dump_tensor(
     tensor: torch.Tensor,
     name: str = "tensor",
@@ -37,7 +36,6 @@ def dump_tensor(
         f.write(f"Timestamp: {datetime.now().isoformat()}\n")
         f.write(f"{'='*60}\n\n")
 
-        # 元信息
         f.write(f"Shape: {tensor.shape}\n")
         f.write(f"Dtype: {tensor.dtype}\n")
         f.write(f"Device: {tensor.device}\n")
@@ -45,7 +43,6 @@ def dump_tensor(
         f.write(f"Is Contiguous: {tensor.is_contiguous()}\n")
         f.write(f"Total Elements: {tensor.numel()}\n\n")
 
-        # 统计
         try:
             tensor_cpu = tensor.detach().cpu()
             f.write(f"Statistics:\n")
@@ -84,14 +81,14 @@ def dump_tensors(
         full_name = f"{prefix}_{name}"
         dump_tensor(tensor, full_name, output_dir, **kwargs)
 
-# ========== 2. Save to BIN（你给的代码）==========
+# ========== 2. Save to BIN ==========
 def save_tensor_to_bin(tensor: torch.Tensor, save_path: str):
     bin_data = tensor.cpu().contiguous().numpy().tobytes()
     with open(save_path, 'wb') as f:
         f.write(bin_data)
     print(f"[BIN] Saved to {save_path}, size: {len(bin_data)} bytes")
 
-# ========== 3. Dump Config JSON（你给的代码）==========
+# ========== 3. Dump Config JSON ==========
 def dump_config(config: dict, save_path: str):
     with open(save_path, 'w') as f:
         json.dump(config, f, indent=4)

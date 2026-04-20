@@ -10,7 +10,7 @@ import torch
 
 @dataclass
 class TensorInfo:
-    """存储从文件中读取的 tensor 信息"""
+    """Store tensor information read from a file"""
     name: str
     sequence_number: int
     shape: tuple
@@ -21,7 +21,7 @@ class TensorInfo:
 
 @dataclass
 class CompareResult:
-    """tensor 对比结果"""
+    """tensor comparison results"""
     sequence_number: int
     name1: str
     name2: str
@@ -39,39 +39,32 @@ class CompareResult:
 
 def parse_tensor_file(filepath: str) -> Optional[TensorInfo]:
     """
-    解析 tensor dump 文件，提取关键信息。
-    
-    参数:
-        filepath: tensor dump 文件路径
-    
-    返回:
-        TensorInfo 对象，如果解析失败则返回 None
+    Parse a tensor dump file and extract key information.
+    Parameters:
+    filepath: Path to the tensor dump file
+    Returns:
+    TensorInfo object, or None if parsing fails
     """
     try:
         with open(filepath, 'r') as f:
             content = f.read()
-        
-        # 提取 tensor 名称
+
         name_match = re.search(r'Tensor Name: (.+)', content)
         name = name_match.group(1).strip() if name_match else "unknown"
-        
-        # 提取序号
+
         seq_match = re.search(r'Sequence Number: (\d+)', content)
         sequence_number = int(seq_match.group(1)) if seq_match else -1
-        
-        # 提取 shape
+
         shape_match = re.search(r'Shape: torch\.Size\(\[([^\]]*)\]\)', content)
         if shape_match:
             shape_str = shape_match.group(1)
             shape = tuple(map(int, shape_str.split(', '))) if shape_str else ()
         else:
             shape = ()
-        
-        # 提取 dtype
+
         dtype_match = re.search(r'Dtype: (.+)', content)
         dtype = dtype_match.group(1).strip() if dtype_match else "unknown"
-        
-        # 提取数据
+
         data_section = re.search(r'Data \(first \d+ elements\):\n-+\n(.*?)(?:\n\n|\Z)', content, re.DOTALL)
         if data_section:
             data_lines = data_section.group(1).strip().split('\n')
@@ -82,12 +75,11 @@ def parse_tensor_file(filepath: str) -> Optional[TensorInfo]:
                     try:
                         values.append(float(value_str))
                     except ValueError:
-                        pass  # 跳过无法解析的值
+                        pass  
             
             if values:
                 data = torch.tensor(values)
             else:
-                # 如果没有数据，尝试从统计信息推断
                 data = torch.tensor([])
         else:
             data = torch.tensor([])
@@ -113,16 +105,16 @@ def compare_tensors(
     atol: float = 1e-8
 ) -> Tuple[bool, dict]:
     """
-    对比两个 tensor 的数值差异。
-    
-    参数:
-        tensor1: 第一个 tensor
-        tensor2: 第二个 tensor
-        rtol: 相对误差容忍度
-        atol: 绝对误差容忍度
-    
-    返回:
-        (是否通过, 详细统计信息)
+    Compare the numerical differences between two tensors.
+
+    Parameters:
+    tensor1: The first tensor
+    tensor2: The second tensor
+    rtol: Relative error tolerance
+    atol: Absolute error tolerance
+
+    Returns:
+    (whether it passes, detailed statistics)
     """
     if tensor1.shape != tensor2.shape:
         return False, {
@@ -133,29 +125,23 @@ def compare_tensors(
             'has_nan': False,
             'has_inf': False,
         }
-    
-    # 确保数据类型一致
+
     tensor1 = tensor1.float()
     tensor2 = tensor2.float()
-    
-    # 检查 NaN 和 Inf
+
     has_nan = torch.isnan(tensor1).any() or torch.isnan(tensor2).any()
     has_inf = torch.isinf(tensor1).any() or torch.isinf(tensor2).any()
-    
-    # 计算绝对误差
+
     abs_diff = torch.abs(tensor1 - tensor2)
     max_abs_diff = abs_diff.max().item()
     mean_abs_diff = abs_diff.mean().item()
-    
-    # 计算相对误差
-    # 避免除以零：使用 max(|a|, |b|, atol) 作为分母
+
     denominator = torch.maximum(torch.abs(tensor1), torch.abs(tensor2))
     denominator = torch.maximum(denominator, torch.tensor(atol))
     rel_diff = abs_diff / denominator
     max_rel_diff = rel_diff.max().item()
     mean_rel_diff = rel_diff.mean().item()
     
-    # 判断是否通过
     passed = torch.allclose(tensor1, tensor2, rtol=rtol, atol=atol) and not has_nan and not has_inf
     
     stats = {
@@ -171,7 +157,7 @@ def compare_tensors(
 
 
 def get_sequence_number_from_filename(filename: str) -> int:
-    """从文件名中提取序号"""
+    """Extract the serial number from the file name"""
     match = re.match(r'(\d+)-', filename)
     return int(match.group(1)) if match else -1
 
@@ -184,19 +170,18 @@ def compare_tensor_dirs(
     output_file: Optional[str] = None
 ) -> list[CompareResult]:
     """
-    对比两个目录中的 tensor 文件。
-    
-    参数:
-        dir1: 第一个目录（如 NVIDIA GPU 输出）
-        dir2: 第二个目录（如 AMD GPU 输出）
-        rtol: 相对误差容忍度
-        atol: 绝对误差容忍度
-        output_file: 可选，保存对比结果的文件路径
-    
-    返回:
-        CompareResult 列表
+    Compare tensor files in two directories.
+
+    Parameters:
+    dir1: The first directory (e.g., output from NVIDIA GPU)
+    dir2: The second directory (e.g., output from AMD GPU)
+    rtol: Relative error tolerance
+    atol: Absolute error tolerance
+    output_file: Optional, the file path to save the comparison results
+
+    Returns:
+    A list of CompareResult
     """
-    # 读取两个目录中的文件
     dir1_files = {}
     dir2_files = {}
     
@@ -211,8 +196,7 @@ def compare_tensor_dirs(
             seq_num = get_sequence_number_from_filename(filename)
             if seq_num >= 0:
                 dir2_files[seq_num] = os.path.join(dir2, filename)
-    
-    # 找出共同的序号
+
     common_seqs = sorted(set(dir1_files.keys()) & set(dir2_files.keys()))
     
     if not common_seqs:
@@ -228,7 +212,6 @@ def compare_tensor_dirs(
     results = []
     
     for seq_num in common_seqs:
-        # 解析两个文件
         info1 = parse_tensor_file(dir1_files[seq_num])
         info2 = parse_tensor_file(dir2_files[seq_num])
         
@@ -249,18 +232,16 @@ def compare_tensor_dirs(
                 message="文件解析失败"
             ))
             continue
-        
-        # 检查 shape 和 dtype
+
         shape_match = info1.shape == info2.shape
         dtype_match = info1.dtype == info2.dtype
-        
-        # 如果没有数据，跳过数值对比
+
         if len(info1.data) == 0 or len(info2.data) == 0:
             results.append(CompareResult(
                 sequence_number=seq_num,
                 name1=info1.name,
                 name2=info2.name,
-                passed=True,  # 无数据默认通过
+                passed=True,  
                 max_abs_diff=0.0,
                 max_rel_diff=0.0,
                 mean_abs_diff=0.0,
@@ -272,11 +253,9 @@ def compare_tensor_dirs(
                 message="无数据可对比（仅元信息）"
             ))
             continue
-        
-        # 对比 tensor 数据
+
         passed, stats = compare_tensors(info1.data, info2.data, rtol=rtol, atol=atol)
-        
-        # 生成消息
+
         if passed:
             message = "✓ PASS"
         else:
@@ -308,11 +287,9 @@ def compare_tensor_dirs(
         )
         
         results.append(result)
-    
-    # 打印结果
+
     print_compare_results(results)
-    
-    # 保存到文件
+
     if output_file:
         save_compare_results(results, output_file)
         print(f"\n对比结果已保存到: {output_file}")
@@ -343,8 +320,7 @@ def print_compare_results(results: list[CompareResult]):
                 print(f"  平均绝对误差: {result.mean_abs_diff:.6e}")
                 print(f"  平均相对误差: {result.mean_rel_diff:.6e}")
                 print()
-    
-    # 打印所有结果的简要列表
+
     print("所有对比结果:")
     print(f"{'序号':<6} {'名称1':<25} {'名称2':<25} {'结果':<10} {'最大绝对误差':<15} {'最大相对误差':<15}")
     print("-" * 100)

@@ -9,7 +9,7 @@ from tensor_dump import (
     compare_tensor_dirs
 )
 
-# 1. 创建测试张量
+# 1. Create test tensors
 x = torch.randn(2, 16).cuda()
 os.makedirs("./dump_a", exist_ok=True)
 os.makedirs("./dump_b", exist_ok=True)
@@ -29,12 +29,12 @@ dump_config({
 
 # 5. Load back
 t_bin = load_tensor_from_bin("./dump_a/data.bin", shape=(2,16))
-t_txt = load_tensor_from_txt("./dump_a/001-test_x_20260419_203306_502968.txt") # 注意替换为真实文件名
+t_txt = load_tensor_from_txt("./dump_a/001-test_x_20260419_203306_502968.txt") # Note: replace with actual filename
 
 print("Tensor 形状:", t_txt.shape)
 print("Tensor 类型:", t_txt.dtype)
 print("Tensor 完整数据:")
 print(t_txt)
 
-# 6. 对比目录（示例）
+# 6. Compare directories
 compare_tensor_dirs("./dump_a", "./dump_b", output_file="result.txt")
