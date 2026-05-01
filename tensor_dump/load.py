@@ -25,18 +25,26 @@ def load_tensor_from_bin(bin_path: str, shape: tuple, dtype: torch.dtype = torch
     return torch.tensor(data, dtype=dtype).view(shape)
 
 def load_tensor_from_txt(txt_path: str) -> Optional[torch.Tensor]:
-    """
-    Load tensor from TXT file
-    """
-    with open(txt_path, 'r') as f:
-        content = f.read()
+    try:
+        with open(txt_path, 'r') as f:
+            content = f.read()
+    except (FileNotFoundError, OSError):
+        print(f"[LOAD TXT] Cannot read {txt_path}")
+        return None
 
-    match = re.search(r"Data \(first \d+ elements\):\n-+\n(.*?)(?:\n\n|\Z)", content, re.DOTALL)
-    if not match:
+    shape_match = re.search(r'Shape: torch\.Size\(\[([^\]]*)\]\)', content)
+    if shape_match:
+        shape_str = shape_match.group(1)
+        shape = tuple(map(int, shape_str.split(', '))) if shape_str else ()
+    else:
+        shape = None
+
+    data_match = re.search(r"Data \(first \d+ of \d+ elements\):\n-+\n(.*?)(?:\n\n|\Z)", content, re.DOTALL)
+    if not data_match:
         print(f"[LOAD TXT] No data found in {txt_path}")
         return None
 
-    lines = match.group(1).strip().splitlines()
+    lines = data_match.group(1).strip().splitlines()
     values = []
     for line in lines:
         if "]:" in line:
@@ -44,5 +52,7 @@ def load_tensor_from_txt(txt_path: str) -> Optional[torch.Tensor]:
             values.append(val)
 
     tensor = torch.tensor(values)
-    print(f"[LOAD TXT] Loaded {txt_path}, elements={len(tensor)}")
+    if shape is not None:
+        tensor = tensor.reshape(shape)
+    print(f"[LOAD TXT] Loaded {txt_path}, shape={tensor.shape}")
     return tensor

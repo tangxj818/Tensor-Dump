@@ -9,6 +9,6 @@ from .load import (
     load_tensor_from_txt,
     load_tensor_from_bin,
 )
-from .compare import compare_tensor_dirs
+from .compare import compare_tensor_dirs, CompareResult
 
 __version__ = "1.0.0"
