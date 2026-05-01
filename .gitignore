@@ -1,5 +1,8 @@
 venv/
 __pycache__/
+build/
+*.egg-info/
+dist/
 *.log
 *.sh
 *.txt

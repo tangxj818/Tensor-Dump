@@ -16,14 +16,29 @@ def reset_dump_counter():
     global _dump_counter
     _dump_counter = 0
 
+def _check_device_id(tensor: torch.Tensor, device_id: Optional[int]) -> bool:
+    if device_id is None:
+        return True
+    dev = tensor.device
+    if dev.type == 'cpu':
+        print(f"[WARN] Tensor is on CPU, expected device_id={device_id}, skipping")
+        return False
+    if dev.index != device_id:
+        print(f"[WARN] Tensor on {dev}, expected device_id={device_id}, skipping")
+        return False
+    return True
+
 # ========== 1. Dump to TXT ==========
 def dump_tensor(
     tensor: torch.Tensor,
     name: str = "tensor",
     output_dir: str = "/tmp/tensor_dumps",
     save_data: bool = True,
-    max_elements: int = sys.maxsize
+    max_elements: int = sys.maxsize,
+    device_id: Optional[int] = None,
 ) -> str:
+    if not _check_device_id(tensor, device_id):
+        return ""
     os.makedirs(output_dir, exist_ok=True)
     counter = _get_next_counter()
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
@@ -57,14 +72,14 @@ def dump_tensor(
             f.write(f"  Has Inf: {has_inf}\n\n")
 
             if save_data:
-                f.write(f"Data (first {max_elements} elements):\n")
-                f.write(f"{'-'*60}\n")
                 flat = tensor_cpu.flatten()
                 n = min(max_elements, flat.numel())
+                f.write(f"Data (first {n} of {flat.numel()} elements):\n")
+                f.write(f"{'-'*60}\n")
                 for i in range(n):
                     f.write(f"  [{i}]: {flat[i].item()}\n")
                 if flat.numel() > max_elements:
-                    f.write(f"  ... ({flat.numel() - max_elements} more)\n")
+                    f.write(f"  ... ({flat.numel()} total elements)\n")
         except Exception as e:
             f.write(f"\nError: {e}\n")
 
@@ -75,14 +90,17 @@ def dump_tensors(
     tensors: Dict[str, torch.Tensor],
     prefix: str = "tensor",
     output_dir: str = "/tmp/tensor_dumps",
+    device_id: Optional[int] = None,
     **kwargs
 ):
     for name, tensor in tensors.items():
         full_name = f"{prefix}_{name}"
-        dump_tensor(tensor, full_name, output_dir, **kwargs)
+        dump_tensor(tensor, full_name, output_dir, device_id=device_id, **kwargs)
 
 # ========== 2. Save to BIN ==========
-def dump_tensor_to_bin(tensor: torch.Tensor, save_path: str):
+def dump_tensor_to_bin(tensor: torch.Tensor, save_path: str, device_id: Optional[int] = None):
+    if not _check_device_id(tensor, device_id):
+        return
     if tensor.dtype == torch.bfloat16:
         tensor = tensor.view(torch.float16)
     bin_data = tensor.cpu().contiguous().numpy().tobytes()
