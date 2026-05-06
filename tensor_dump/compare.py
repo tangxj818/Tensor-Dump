@@ -65,7 +65,7 @@ def parse_tensor_file(filepath: str) -> Optional[TensorInfo]:
         dtype_match = re.search(r'Dtype: (.+)', content)
         dtype = dtype_match.group(1).strip() if dtype_match else "unknown"
 
-        data_section = re.search(r'Data \(first \d+ elements\):\n-+\n(.*?)(?:\n\n|\Z)', content, re.DOTALL)
+        data_section = re.search(r'Data \(first \d+ of \d+ elements\):\n-+\n(.*?)(?:\n\n|\Z)', content, re.DOTALL)
         if data_section:
             data_lines = data_section.group(1).strip().split('\n')
             values = []
